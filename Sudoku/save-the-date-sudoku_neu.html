@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ein Rätsel für euch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-deep:#131B33;
+    --navy-mid:#243357;
+    --dusk-glow:#5b6f9e;
+    --parchment:#FBF6EC;
+    --parchment-edge:#EFE6D3;
+    --ink:#211F26;
+    --ink-soft:#5A5668;
+    --gold:#B4893A;
+    --gold-bright:#D7AE5F;
+    --teal:#3E7C74;
+    --error:#B24545;
+  }
+
+  *{box-sizing:border-box;}
+
+  html{
+    background-color:#131B33;
+  }
+
+  html,body{
+    margin:0;
+    min-height:100vh;
+    width:100%;
+    font-family:'Inter',Arial,sans-serif;
+    color:var(--ink);
+    background-color:#131B33;
+    background-image:
+      radial-gradient(circle at 20% 15%, rgba(215,174,95,0.10), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(62,124,116,0.18), transparent 50%),
+      linear-gradient(160deg, var(--navy-deep) 0%, var(--navy-mid) 55%, #2c3a5e 100%);
+  }
+
+  body{
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:48px 18px 72px;
+  }
+
+  .card{
+    width:100%;
+    max-width:560px;
+    min-width:0;
+    background:var(--parchment);
+    border:1px solid var(--parchment-edge);
+    border-radius:6px;
+    padding:44px 38px 40px;
+    box-shadow:0 30px 60px -20px rgba(6,10,25,0.55), 0 2px 0 rgba(255,255,255,0.4) inset;
+    position:relative;
+  }
+
+  .intro{
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:16px;
+    color:var(--teal);
+    margin:0 0 6px;
+  }
+
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(26px, 5vw, 32px);
+    line-height:1.15;
+    margin:0 0 18px;
+    color:var(--ink);
+  }
+
+  .lede{
+    font-size:15px;
+    line-height:1.65;
+    color:var(--ink-soft);
+    margin:0 0 8px;
+    max-width:46ch;
+  }
+
+  .howto{
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink-soft);
+    margin:18px 0 26px;
+    padding:14px 16px;
+    background:rgba(180,137,58,0.08);
+    border-left:2px solid var(--gold);
+    border-radius:2px;
+  }
+
+  .howto b{color:var(--ink); font-weight:600;}
+
+  /* --- SUDOKU GRID --- */
+  .grid-wrap{
+    display:flex;
+    justify-content:center;
+    margin:8px 0 22px;
+    width:100%;
+    min-width:0;
+    box-sizing:border-box;
+  }
+
+  .grid-square{
+    position:relative;
+    width:100%;
+    max-width:420px;
+    min-width:0;
+    box-sizing:border-box;
+  }
+
+  .grid-square::before{
+    content:"";
+    display:block;
+    padding-top:100%;
+  }
+
+  .grid{
+    position:absolute;
+    top:0;
+    left:0;
+    border-collapse:collapse;
+    table-layout:fixed;
+    width:100%;
+    height:100%;
+    min-width:0;
+    background:var(--parchment);
+    border:2.5px solid var(--ink);
+    border-radius:3px;
+    box-sizing:border-box;
+  }
+
+  .cell{
+    position:relative;
+    background:var(--parchment);
+    text-align:center;
+    vertical-align:middle;
+    font-family:'Inter',Arial,sans-serif;
+    border:1px solid #8a8578;
+    padding:0;
+    width:11.11%;
+    max-width:11.11%;
+    overflow:hidden;
+    box-sizing:border-box;
+  }
+
+  .cell.given{
+    font-weight:700;
+    font-size:clamp(14px, 3.4vw, 19px);
+    color:var(--ink);
+    background:#F1E9D8;
+  }
+
+  .cell input{
+    display:block;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    height:100%;
+    border:none;
+    background:transparent;
+    text-align:center;
+    font-family:'Inter',Arial,sans-serif;
+    font-weight:600;
+    font-size:clamp(14px, 3.4vw, 19px);
+    color:var(--teal);
+    caret-color:var(--teal);
+    padding:0;
+    margin:0;
+    box-sizing:border-box;
+  }
+
+  .cell input:focus{
+    outline:none;
+    background:rgba(62,124,116,0.12);
+  }
+
+  .cell.msg-cell input, .cell.msg-cell.given{
+    box-shadow:inset 0 0 0 2px rgba(180,137,58,0.55);
+  }
+
+  .cell .badge{
+    position:absolute;
+    top:1px;
+    left:2px;
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-size:9px;
+    color:var(--gold);
+    line-height:1;
+    pointer-events:none;
+  }
+
+  .cell.wrong input{
+    background:rgba(178,69,69,0.18);
+    color:var(--error);
+  }
+
+  .cell.solved input, .cell.solved.given{
+    background:rgba(215,174,95,0.22);
+  }
+
+  /* thicker box borders */
+  .cell[data-c="2"], .cell[data-c="5"]{ border-right:2.5px solid var(--ink); }
+  .cell[data-c="0"]{ border-left:2px solid var(--ink); }
+  .cell[data-r="2"], .cell[data-r="5"]{ border-bottom:2.5px solid var(--ink); }
+  .cell[data-r="0"]{ border-top:2px solid var(--ink); }
+
+  /* --- BUTTON --- */
+  .actions{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-bottom:6px;
+  }
+
+  button{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    padding:11px 26px;
+    border-radius:3px;
+    border:1px solid var(--ink);
+    background:var(--ink);
+    color:var(--parchment);
+    cursor:pointer;
+    transition:transform 0.15s ease, background 0.15s ease;
+  }
+
+  button:hover{ background:#33303c; }
+  button:active{ transform:scale(0.97); }
+
+  button.ghost{
+    background:transparent;
+    color:var(--ink-soft);
+    border:1px solid #D9CFB8;
+    font-weight:500;
+  }
+  button.ghost:hover{ background:rgba(0,0,0,0.03); }
+
+  .feedback{
+    text-align:center;
+    min-height:20px;
+    font-size:13.5px;
+    color:var(--error);
+    margin:10px 0 4px;
+  }
+
+  /* --- REVEAL PANEL --- */
+  .reveal{
+    margin-top:26px;
+    border-radius:4px;
+    padding:26px 20px;
+    text-align:center;
+    background:linear-gradient(160deg, #1a2340, #2c3a5e);
+    color:var(--parchment);
+    position:relative;
+    overflow:hidden;
+    transition:min-height 0.4s ease;
+  }
+
+  .reveal.locked{
+    padding:20px;
+  }
+
+  .lock-msg{
+    font-size:14px;
+    color:#C9CFE0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+
+  .reveal-content{
+    display:none;
+  }
+
+  .reveal.open .lock-msg{ display:none; }
+  .reveal.open .reveal-content{
+    display:block;
+    animation:unfold 0.9s ease forwards;
+  }
+
+  @keyframes unfold{
+    from{ opacity:0; transform:translateY(8px) scale(0.98); }
+    to{ opacity:1; transform:translateY(0) scale(1); }
+  }
+
+  .reveal-eyebrow{
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-size:14px;
+    color:var(--gold-bright);
+    margin:0 0 6px;
+  }
+
+  .reveal-date{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(24px,6vw,32px);
+    margin:0 0 12px;
+    letter-spacing:0.3px;
+  }
+
+  .reveal-text{
+    font-size:14px;
+    line-height:1.65;
+    color:#D8DCEC;
+    max-width:38ch;
+    margin:0 auto;
+  }
+
+  .decode-seq{
+    font-family:'Fraunces',serif;
+    font-size:13px;
+    color:#8b95b8;
+    margin-top:14px;
+    letter-spacing:2px;
+  }
+
+  footer{
+    text-align:center;
+    font-size:12px;
+    color:rgba(255,255,255,0.35);
+    margin-top:26px;
+  }
+
+  @media (max-width:480px){
+    .card{ padding:32px 20px 30px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .reveal.open .reveal-content{ animation:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <p class="intro">Für euch beide</p>
+  <h1>Ein Rätsel, das ein Wochenende verrät</h1>
+  <p class="lede">Bevor wir euch verraten, was wir geplant haben, müsst ihr es euch verdienen — mit einem Sudoku.</p>
+
+  <div class="howto">
+    Löst das Sudoku wie gewohnt. Acht Felder sind golden markiert und mit einer kleinen Zahl <b>1–8</b> versehen. Sobald das Rätsel vollständig und richtig ausgefüllt ist, öffnet sich unten die Nachricht von selbst.
+  </div>
+
+  <div class="grid-wrap">
+    <div class="grid-square">
+    <table class="grid" id="grid" cellspacing="0" cellpadding="0"><tbody>
+<tr><td class="cell" data-r="0" data-c="0"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="0" data-c="0"></td><td class="cell given" data-r="0" data-c="1">8</td><td class="cell" data-r="0" data-c="2"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="0" data-c="2"></td><td class="cell given" data-r="0" data-c="3">3</td><td class="cell given" data-r="0" data-c="4">6</td><td class="cell given" data-r="0" data-c="5">5</td><td class="cell msg-cell" data-r="0" data-c="6"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="0" data-c="6"><span class="badge">8</span></td><td class="cell" data-r="0" data-c="7"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="0" data-c="7"></td><td class="cell" data-r="0" data-c="8"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="0" data-c="8"></td></tr>
+<tr><td class="cell" data-r="1" data-c="0"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="1" data-c="0"></td><td class="cell" data-r="1" data-c="1"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="1" data-c="1"></td><td class="cell given" data-r="1" data-c="2">5</td><td class="cell given" data-r="1" data-c="3">8</td><td class="cell given" data-r="1" data-c="4">4</td><td class="cell msg-cell" data-r="1" data-c="5"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="1" data-c="5"><span class="badge">2</span></td><td class="cell given" data-r="1" data-c="6">9</td><td class="cell given" data-r="1" data-c="7">6</td><td class="cell" data-r="1" data-c="8"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="1" data-c="8"></td></tr>
+<tr><td class="cell" data-r="2" data-c="0"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="2" data-c="0"></td><td class="cell given" data-r="2" data-c="1">7</td><td class="cell msg-cell" data-r="2" data-c="2"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="2" data-c="2"><span class="badge">6</span></td><td class="cell" data-r="2" data-c="3"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="2" data-c="3"></td><td class="cell" data-r="2" data-c="4"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="2" data-c="4"></td><td class="cell" data-r="2" data-c="5"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="2" data-c="5"></td><td class="cell" data-r="2" data-c="6"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="2" data-c="6"></td><td class="cell" data-r="2" data-c="7"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="2" data-c="7"></td><td class="cell given" data-r="2" data-c="8">3</td></tr>
+<tr><td class="cell" data-r="3" data-c="0"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="3" data-c="0"></td><td class="cell given" data-r="3" data-c="1">9</td><td class="cell msg-cell" data-r="3" data-c="2"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="3" data-c="2"><span class="badge">7</span></td><td class="cell" data-r="3" data-c="3"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="3" data-c="3"></td><td class="cell given" data-r="3" data-c="4">3</td><td class="cell" data-r="3" data-c="5"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="3" data-c="5"></td><td class="cell" data-r="3" data-c="6"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="3" data-c="6"></td><td class="cell given" data-r="3" data-c="7">1</td><td class="cell given" data-r="3" data-c="8">7</td></tr>
+<tr><td class="cell" data-r="4" data-c="0"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="4" data-c="0"></td><td class="cell" data-r="4" data-c="1"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="4" data-c="1"></td><td class="cell given" data-r="4" data-c="2">4</td><td class="cell" data-r="4" data-c="3"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="4" data-c="3"></td><td class="cell given" data-r="4" data-c="4">5</td><td class="cell given" data-r="4" data-c="5">1</td><td class="cell" data-r="4" data-c="6"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="4" data-c="6"></td><td class="cell" data-r="4" data-c="7"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="4" data-c="7"></td><td class="cell given" data-r="4" data-c="8">8</td></tr>
+<tr><td class="cell given" data-r="5" data-c="0">8</td><td class="cell" data-r="5" data-c="1"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="5" data-c="1"></td><td class="cell" data-r="5" data-c="2"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="5" data-c="2"></td><td class="cell given" data-r="5" data-c="3">2</td><td class="cell" data-r="5" data-c="4"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="5" data-c="4"></td><td class="cell" data-r="5" data-c="5"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="5" data-c="5"></td><td class="cell" data-r="5" data-c="6"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="5" data-c="6"></td><td class="cell" data-r="5" data-c="7"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="5" data-c="7"></td><td class="cell" data-r="5" data-c="8"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="5" data-c="8"></td></tr>
+<tr><td class="cell msg-cell" data-r="6" data-c="0"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="6" data-c="0"><span class="badge">1</span></td><td class="cell" data-r="6" data-c="1"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="6" data-c="1"></td><td class="cell" data-r="6" data-c="2"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="6" data-c="2"></td><td class="cell" data-r="6" data-c="3"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="6" data-c="3"></td><td class="cell given" data-r="6" data-c="4">1</td><td class="cell msg-cell" data-r="6" data-c="5"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="6" data-c="5"><span class="badge">3</span></td><td class="cell" data-r="6" data-c="6"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="6" data-c="6"></td><td class="cell" data-r="6" data-c="7"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="6" data-c="7"></td><td class="cell" data-r="6" data-c="8"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="6" data-c="8"></td></tr>
+<tr><td class="cell" data-r="7" data-c="0"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="7" data-c="0"></td><td class="cell" data-r="7" data-c="1"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="7" data-c="1"></td><td class="cell given" data-r="7" data-c="2">3</td><td class="cell given" data-r="7" data-c="3">4</td><td class="cell" data-r="7" data-c="4"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="7" data-c="4"></td><td class="cell" data-r="7" data-c="5"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="7" data-c="5"></td><td class="cell" data-r="7" data-c="6"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="7" data-c="6"></td><td class="cell" data-r="7" data-c="7"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="7" data-c="7"></td><td class="cell" data-r="7" data-c="8"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="7" data-c="8"></td></tr>
+<tr><td class="cell given" data-r="8" data-c="0">7</td><td class="cell" data-r="8" data-c="1"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="8" data-c="1"></td><td class="cell msg-cell" data-r="8" data-c="2"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="8" data-c="2"><span class="badge">5</span></td><td class="cell" data-r="8" data-c="3"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="8" data-c="3"></td><td class="cell" data-r="8" data-c="4"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="8" data-c="4"></td><td class="cell given" data-r="8" data-c="5">3</td><td class="cell given" data-r="8" data-c="6">1</td><td class="cell given" data-r="8" data-c="7">4</td><td class="cell msg-cell" data-r="8" data-c="8"><input type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" size="1" data-r="8" data-c="8"><span class="badge">4</span></td></tr>
+</tbody></table>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button id="checkBtn">Prüfen</button>
+    <button id="resetBtn" class="ghost">Zurücksetzen</button>
+  </div>
+  <p class="feedback" id="feedback"></p>
+
+  <div class="reveal locked" id="reveal">
+    <p class="lock-msg">🔒&nbsp; Noch verschlossen — löst erst das Sudoku</p>
+    <div class="reveal-content">
+      <p class="reveal-eyebrow">Save the Date</p>
+      <p class="reveal-date">27.–29. Juni 2027</p>
+      <p class="reveal-text">Wir schenken euch ein gemeinsames Wochenende. Haltet euch diese drei Tage frei — alles Weitere verraten wir euch bald persönlich. Wir freuen uns riesig auf euch!</p>
+      <p class="decode-seq" id="decodeSeq"></p>
+    </div>
+  </div>
+
+  <footer>handgemacht, mit einem gültigen, eindeutig lösbaren Sudoku</footer>
+</div>
+
+<script>
+var puzzle = [
+  [0,8,0,3,6,5,0,0,0],
+  [0,0,5,8,4,0,9,6,0],
+  [0,7,0,0,0,0,0,0,3],
+  [0,9,0,0,3,0,0,1,7],
+  [0,0,4,0,5,1,0,0,8],
+  [8,0,0,2,0,0,0,0,0],
+  [0,0,0,0,1,0,0,0,0],
+  [0,0,3,4,0,0,0,0,0],
+  [7,0,0,0,0,3,1,4,0]
+];
+
+var solution = [
+  [9,8,1,3,6,5,7,2,4],
+  [3,2,5,8,4,7,9,6,1],
+  [4,7,6,1,2,9,8,5,3],
+  [5,9,2,6,3,8,4,1,7],
+  [6,3,4,7,5,1,2,9,8],
+  [8,1,7,2,9,4,5,3,6],
+  [2,4,8,9,1,6,3,7,5],
+  [1,5,3,4,7,2,6,8,9],
+  [7,6,9,5,8,3,1,4,2]
+];
+
+// r, c, order
+var messageCells = [
+  {r:6,c:0,order:1},
+  {r:1,c:5,order:2},
+  {r:6,c:5,order:3},
+  {r:8,c:8,order:4},
+  {r:8,c:2,order:5},
+  {r:2,c:2,order:6},
+  {r:3,c:2,order:7},
+  {r:0,c:6,order:8}
+];
+
+var msgLookup = {};
+for (var mi=0; mi<messageCells.length; mi++){
+  var mc = messageCells[mi];
+  msgLookup[mc.r+'-'+mc.c] = mc.order;
+}
+
+var gridEl = document.getElementById('grid');
+var gridBody = gridEl.getElementsByTagName('tbody')[0];
+var feedback = document.getElementById('feedback');
+var reveal = document.getElementById('reveal');
+var decodeSeq = document.getElementById('decodeSeq');
+
+function hasClass(el, name){
+  return (' ' + el.className + ' ').indexOf(' ' + name + ' ') > -1;
+}
+function addClass(el, name){
+  if(!hasClass(el, name)) el.className = (el.className + ' ' + name).replace(/^\s+/,'');
+}
+function removeClass(el, name){
+  el.className = (' ' + el.className + ' ').replace(' ' + name + ' ', ' ').replace(/^\s+|\s+$/g,'');
+}
+function closestCell(el){
+  while(el && el.className && !hasClass(el,'cell')){ el = el.parentNode; }
+  return el;
+}
+
+// The 9x9 grid already exists as static HTML in the page (works even if this
+// script never runs). This function only wires up the interactive behaviour
+// on the fields that already exist, and resets values on "Zuruecksetzen".
+function attachGrid(){
+  var inputs = gridEl.getElementsByTagName('input');
+  for(var i=0;i<inputs.length;i++){
+    inputs[i].value = '';
+    inputs[i].readOnly = false;
+    inputs[i].onkeyup = onCellInput;
+    inputs[i].onkeydown = onKeyNav;
+    removeClass(closestCell(inputs[i]), 'wrong');
+    removeClass(closestCell(inputs[i]), 'solved');
+  }
+  var tds = gridEl.getElementsByTagName('td');
+  for(var j=0;j<tds.length;j++){
+    removeClass(tds[j], 'solved');
+  }
+}
+
+function onCellInput(e){
+  e = e || window.event;
+  var target = e.target || e.srcElement;
+  var val = target.value.replace(/[^1-9]/g,'');
+  val = val.length ? val.charAt(val.length-1) : '';
+  target.value = val;
+  var cellDiv = closestCell(target);
+  if(cellDiv) removeClass(cellDiv, 'wrong');
+  if(val){
+    var r = parseInt(target.getAttribute('data-r'),10);
+    var c = parseInt(target.getAttribute('data-c'),10);
+    var next = findNext(r,c);
+    if(next) next.focus();
+  }
+}
+
+function findInput(r,c){
+  var inputs = gridEl.getElementsByTagName('input');
+  for(var i=0;i<inputs.length;i++){
+    if(inputs[i].getAttribute('data-r') == r && inputs[i].getAttribute('data-c') == c) return inputs[i];
+  }
+  return null;
+}
+
+function findNext(r,c){
+  for(var i = r*9+c+1; i<81; i++){
+    var rr = Math.floor(i/9), cc = i%9;
+    var el = findInput(rr,cc);
+    if(el) return el;
+  }
+  return null;
+}
+
+function onKeyNav(e){
+  e = e || window.event;
+  var target = e.target || e.srcElement;
+  var r = parseInt(target.getAttribute('data-r'),10);
+  var c = parseInt(target.getAttribute('data-c'),10);
+  var key = e.key;
+  var t = null;
+  if(key==='ArrowRight') t = findInput(r,c+1);
+  if(key==='ArrowLeft') t = findInput(r,c-1);
+  if(key==='ArrowDown') t = findInput(r+1,c);
+  if(key==='ArrowUp') t = findInput(r-1,c);
+  if(t){ if(e.preventDefault) e.preventDefault(); t.focus(); }
+}
+
+attachGrid();
+
+document.getElementById('checkBtn').onclick = function(){
+  var inputs = gridEl.getElementsByTagName('input');
+  var filled = 0;
+  var allCorrect = true;
+  var wrongCells = [];
+
+  for(var i=0;i<inputs.length;i++){
+    var input = inputs[i];
+    var r = parseInt(input.getAttribute('data-r'),10);
+    var c = parseInt(input.getAttribute('data-c'),10);
+    var cellDiv = closestCell(input);
+    removeClass(cellDiv, 'wrong');
+    if(input.value){
+      filled++;
+      if(parseInt(input.value,10) !== solution[r][c]){
+        allCorrect = false;
+        addClass(cellDiv, 'wrong');
+        wrongCells.push(cellDiv);
+      }
+    } else {
+      allCorrect = false;
+    }
+  }
+
+  if(filled < inputs.length){
+    feedback.textContent = 'Noch ' + (inputs.length - filled) + ' freie Felder.';
+    return;
+  }
+
+  if(!allCorrect){
+    feedback.textContent = 'Fast — ein paar Felder stimmen noch nicht. Rot markierte Felder noch einmal prüfen.';
+    setTimeout(function(){
+      for(var k=0;k<wrongCells.length;k++){ removeClass(wrongCells[k], 'wrong'); }
+    }, 2200);
+    return;
+  }
+
+  feedback.textContent = '';
+  for(var j=0;j<inputs.length;j++){
+    inputs[j].readOnly = true;
+    addClass(closestCell(inputs[j]), 'solved');
+  }
+  var givens = gridEl.getElementsByTagName('td');
+  for(var g=0; g<givens.length; g++){
+    if(hasClass(givens[g],'given') && hasClass(givens[g],'msg-cell')) addClass(givens[g],'solved');
+  }
+
+  openReveal();
+};
+
+document.getElementById('resetBtn').onclick = function(){
+  attachGrid();
+  feedback.textContent = '';
+  removeClass(reveal, 'open');
+  addClass(reveal, 'locked');
+  decodeSeq.textContent = '';
+};
+
+function openReveal(){
+  removeClass(reveal, 'locked');
+  addClass(reveal, 'open');
+
+  var ordered = messageCells.slice().sort(function(a,b){ return a.order-b.order; });
+  var seq = [];
+  for(var i=0;i<ordered.length;i++){ seq.push(solution[ordered[i].r][ordered[i].c]); }
+  var shown = '';
+  var idx = 0;
+  decodeSeq.textContent = '';
+  var timer = setInterval(function(){
+    if(idx >= seq.length){ clearInterval(timer); return; }
+    shown += seq[idx] + ' ';
+    decodeSeq.textContent = shown.replace(/\s+$/,'');
+    idx++;
+  }, 220);
+
+  if(reveal.scrollIntoView) reveal.scrollIntoView(true);
+}
+</script>
+
+</body>
+</html>
